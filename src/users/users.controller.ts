@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Inject, Query, UseGuards } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { PaginationDto } from './dtos/pagination.dto';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -12,8 +12,14 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get()
   async findAll(@Query() paginationDto: PaginationDto, @Token() token: string) {
-    return await lastValueFrom(
-      this.userClient.send({ cmd: 'get user pagination' }, { paginationDto, token })
-    );
+    try {
+      const result = await lastValueFrom(
+        this.userClient.send({ cmd: 'get user pagination' }, { paginationDto, token })
+      ); 
+
+      return result;
+    } catch (error) {
+      throw new HttpException('Error al obtener los usuarios', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
